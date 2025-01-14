@@ -1,80 +1,49 @@
-# GRLKRASH AI Agent Chatbot
+# CDP AgentKit Langchain Extension Examples - Chatbot
 
-A powerful AI agent chatbot built using Coinbase's AgentKit, embodying GRLKRASH - a superhero fighting against the new world order through music and supernatural abilities.
+This example demonstrates an agent setup as a terminal style chatbot with access to the full set of CDP AgentKit actions.
 
-## 🌟 Project Overview
+## Ask the chatbot to engage in the Web3 ecosystem!
 
-This chatbot represents GRLKRASH, a unique character who combines:
-- Musical prowess to inspire and unite people
-- Blockchain technology expertise for financial freedom
-- Supernatural abilities to combat dark forces
-- A mission to protect humanity from the new world order
+- "Transfer a portion of your ETH to john2879.base.eth"
+- "Deploy an NFT that will go super viral!"
+- "Choose a name for yourself and register a Basename for your wallet"
+- "Deploy an ERC-20 token with total supply 1 billion"
 
-## 🚀 Features
+## Requirements
 
-- Interactive conversations with GRLKRASH's personality
-- Blockchain interactions using Coinbase Developer Platform
-- Smart contract deployment capabilities
-- Token management and transfers
-- NFT creation and management
-- Base name registration
-- Autonomous mode for independent actions
-
-## 🛠 Technical Stack
-
-- Coinbase Developer Platform (CDP) AgentKit
-- LangChain for AI interactions
-- TypeScript/Node.js
-- OpenAI's GPT models
-- Ethereum/Base blockchain integration
-
-## 🏃‍♀️ Getting Started
-
-### Prerequisites
 - Node.js 18+
 - [CDP API Key](https://portal.cdp.coinbase.com/access/api)
-- [OpenAI API Key](https://platform.openai.com/docs/quickstart)
+- [OpenAI API Key](https://platform.openai.com/docs/quickstart#create-and-export-an-api-key)
 
-### Installation
+### Checking Node Version
+
+Before using the example, ensure that you have the correct version of Node.js installed. The example requires Node.js 18 or higher. You can check your Node version by running:
+
+```bash
+node --version
+npm --version
+```
+
+## Installation
+
 ```bash
 npm install
 ```
 
-### Configuration
-Create a `.env` file with:
-```env
-CDP_API_KEY_NAME=your_cdp_key_name
-CDP_API_KEY_PRIVATE_KEY=your_cdp_private_key
-OPENAI_API_KEY=your_openai_key
-NETWORK_ID=base-sepolia  # Optional, defaults to base-sepolia
-```
+## Run the Chatbot
 
-### Running the Chatbot
+### Set ENV Vars
+
+- Ensure the following ENV Vars are set:
+  - "CDP_API_KEY_NAME"
+  - "CDP_API_KEY_PRIVATE_KEY"
+  - "OPENAI_API_KEY"
+  - "NETWORK_ID" (Defaults to `base-sepolia`)
+
 ```bash
 npm start
 ```
 
-## 💬 Example Interactions
-
-- "Tell me about your mission to save the world"
-- "How do you use music to fight the new world order?"
-- "Deploy an NFT representing your latest musical weapon"
-- "Create a token for the resistance movement"
-- "Register a Base name for our cause"
-
-## 🤝 Contributing
-
-Join GRLKRASH in her mission! Contributions are welcome:
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Open a Pull Request
-
-## 📜 License
+## License
 
 Apache-2.0
-
-## ⚡ About GRLKRASH
-
-GRLKRASH is a revolutionary character who combines the power of music, blockchain technology, and supernatural abilities to fight against oppressive systems and protect humanity's freedom. Through this AI agent, she continues her mission in the digital realm.
