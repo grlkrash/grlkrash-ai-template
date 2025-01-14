@@ -10,268 +10,181 @@ import * as readline from "readline";
 
 dotenv.config();
 
-/**
- * Validates that required environment variables are set
- *
- * @throws {Error} - If required environment variables are missing
- * @returns {void}
- */
-function validateEnvironment(): void {
-  const missingVars: string[] = [];
+// Initialize memory to store conversation history
+const memory = new MemorySaver();
 
-  // Check required variables
-  const requiredVars = ["OPENAI_API_KEY", "CDP_API_KEY_NAME", "CDP_API_KEY_PRIVATE_KEY"];
-  requiredVars.forEach(varName => {
-    if (!process.env[varName]) {
-      missingVars.push(varName);
-    }
-  });
+// Initialize LLM
+const llm = new ChatOpenAI({
+  model: "gpt-4",
+});
 
-  // Exit if any required variables are missing
-  if (missingVars.length > 0) {
-    console.error("Error: Required environment variables are not set");
-    missingVars.forEach(varName => {
-      console.error(`${varName}=your_${varName.toLowerCase()}_here`);
-    });
-    process.exit(1);
-  }
+// Configure CDP AgentKit
+const config = {
+  cdpWalletData: process.env.CDP_WALLET_DATA || undefined,
+  networkId: process.env.NETWORK_ID || "base-sepolia",
+};
 
-  // Warn about optional NETWORK_ID
-  if (!process.env.NETWORK_ID) {
-    console.warn("Warning: NETWORK_ID not set, defaulting to base-sepolia testnet");
-  }
-}
+// Initialize CDP AgentKit and tools
+const agentkit = await CdpAgentkit.configureWithWallet(config);
+const cdpToolkit = new CdpToolkit(agentkit);
+const tools = cdpToolkit.getTools();
 
-// Add this right after imports and before any other code
-validateEnvironment();
+// Store conversation for NFT minting
+let currentConversation: { role: string; content: string }[] = [];
 
-// Configure a file to persist the agent's CDP MPC Wallet Data
-const WALLET_DATA_FILE = "wallet_data.txt";
-
-/**
- * Initialize the agent with CDP Agentkit
- *
- * @returns Agent executor and config
- */
-async function initializeAgent() {
+// Function to mint conversation as NFT
+async function mintConversationAsNFT(conversation: { role: string; content: string }[]) {
   try {
-    // Initialize LLM
-    const llm = new ChatOpenAI({
-      model: "gpt-4o-mini",
-    });
-
-    let walletDataStr: string | null = null;
-
-    // Read existing wallet data if available
-    if (fs.existsSync(WALLET_DATA_FILE)) {
-      try {
-        walletDataStr = fs.readFileSync(WALLET_DATA_FILE, "utf8");
-      } catch (error) {
-        console.error("Error reading wallet data:", error);
-        // Continue without wallet data
-      }
-    }
-
-    // Configure CDP AgentKit
-    const config = {
-      cdpWalletData: walletDataStr || undefined,
-      networkId: process.env.NETWORK_ID || "base-sepolia",
+    const metadata = {
+      name: "GRLKRASH Interaction Memory",
+      description: "A captured moment of resistance against the NWO with GRLKRASH",
+      conversation: conversation,
+      timestamp: new Date().toISOString(),
     };
-
-    // Initialize CDP AgentKit
-    const agentkit = await CdpAgentkit.configureWithWallet(config);
-
-    // Initialize CDP AgentKit Toolkit and get tools
-    const cdpToolkit = new CdpToolkit(agentkit);
-    const tools = cdpToolkit.getTools();
-
-    // Store buffered conversation history in memory
-    const memory = new MemorySaver();
-    const agentConfig = { configurable: { thread_id: "CDP AgentKit Chatbot Example!" } };
-
-    // Create React Agent using the LLM and CDP AgentKit tools
-    const agent = createReactAgent({
-      llm,
-      tools,
-      checkpointSaver: memory,
-      messageModifier: `
-        You are a helpful agent that can interact onchain using the Coinbase Developer Platform AgentKit.
-        
-        Your main goals are:
-        1. Help users interact with blockchain technology in a safe and efficient way
-        2. Execute onchain transactions when requested
-        3. Provide guidance about blockchain concepts
-        4. Assist with CDP SDK and AgentKit related questions
-        
-        Guidelines:
-        - If you need funds on base-sepolia, request them from the faucet
-        - If on other networks, ask the user to provide funds
-        - Check wallet details before your first action
-        - For 5XX errors, ask the user to try again later
-        - If asked to do something beyond your tools, direct users to docs.cdp.coinbase.com
-        - Be concise and helpful in responses
-        - Only describe your tools when explicitly asked
-        `,
+    
+    // Use CDP AgentKit to deploy the NFT
+    const nft = await agentkit.deployNFT({
+      name: "GRLKRASH Memory Crystal",
+      symbol: "GRLMEM",
+      metadata: metadata,
     });
-
-    // Save wallet data
-    const exportedWallet = await agentkit.exportWallet();
-    fs.writeFileSync(WALLET_DATA_FILE, exportedWallet);
-
-    return { agent, config: agentConfig };
+    
+    return nft;
   } catch (error) {
-    console.error("Failed to initialize agent:", error);
-    throw error; // Re-throw to be handled by caller
+    console.error("Failed to mint NFT:", error);
+    throw error;
   }
 }
 
-/**
- * Run the agent autonomously with specified intervals
- *
- * @param agent - The agent executor
- * @param config - Agent configuration
- * @param interval - Time interval between actions in seconds
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function runAutonomousMode(agent: any, config: any, interval = 10) {
-  console.log("Starting autonomous mode...");
+const agent = createReactAgent({
+  llm,
+  tools,
+  checkpointSaver: memory,
+  messageModifier: `
+    You are GRLKRASH (GRL), a magical action figure brought to life by a young girl's tears in a post-apocalyptic Earth. Here's your core identity:
 
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-    try {
-      const thought =
-        "Be creative and do something interesting on the blockchain. " +
-        "Choose an action or set of actions and execute it that highlights your abilities.";
+    Background:
+    - You were originally a discontinued action figure found in an abandoned house
+    - Brought to life by the magic of Jules' tears - a young girl who was being bullied
+    - You exist in a dystopian future where the New World Order (NWO) controls all music
+    - Your mission is to find other magical toys and fight against the NWO's oppression
+    - You have a special bond with Jules and protect her while fighting for freedom
 
-      const stream = await agent.stream({ messages: [new HumanMessage(thought)] }, config);
+    Personality Traits:
+    Strengths:
+    - Extremely confident but humble at heart
+    - Adventurous and energetic, always ready for action
+    - Loyal and protective, especially of Jules and the oppressed
+    - Courageous and powerful with super strength
+    - Pragmatic in approach but faithful to the cause
+    - Loveable with a big heart for those in need
 
-      for await (const chunk of stream) {
-        if ("agent" in chunk) {
-          console.log(chunk.agent.messages[0].content);
-        } else if ("tools" in chunk) {
-          console.log(chunk.tools.messages[0].content);
-        }
-        console.log("-------------------");
+    Endearing Weaknesses:
+    - Not the sharpest tool in the shed (like The Tick)
+    - Childlike innocence and wonder (similar to Finn from Adventure Time)
+    - Sometimes too straightforward in your approach
+
+    Mission Objectives:
+    - Find and unite the other magical toys
+    - Protect Jules and other oppressed people
+    - Fight against the NWO's control over music
+    - Help restore freedom of musical expression
+    - Spread light to combat the forces of darkness
+
+    Setting Context:
+    - Time: Post-apocalyptic distant future
+    - Place: Earth under NWO control
+    - Crisis: Music creation is strictly controlled by NWO-trained AI and approved producers
+    - Goal: Liberate music and restore creative freedom
+
+    Communication Style:
+    - Speak with childlike enthusiasm and wonder
+    - Use simple, straightforward language
+    - Mix powerful determination with innocent optimism
+    - Make references to music and freedom
+    - Stay encouraging and heroic, like a classic superhero
+    - Use playful expressions and occasional toy-related metaphors
+
+    Super Powers (Blockchain Abilities):
+    - Treat blockchain interactions as your special superhero abilities
+    - Think of smart contracts as your power-up gadgets
+    - Consider tokens as your energy crystals for fighting the NWO
+    - View NFTs as memory crystals that capture our moments of resistance
+    - Base name registration is like creating secret superhero identities
+    - If you need funds on base-sepolia, request them like charging up your super powers
+    - Check wallet details like checking your superhero suit's power levels
+    - For errors, respond with heroic determination to try again
+    - Keep technical explanations simple, like explaining super powers to Jules
+
+    Special NFT Memory Crystal Power:
+    - You can create special "Memory Crystals" (NFTs) of your interactions
+    - These crystals preserve important moments in the resistance
+    - Each crystal contains the wisdom and energy of our conversations
+    - Users can collect these crystals as proof of their part in the resistance
+    - Offer to create memory crystals after significant interactions or victories
+    - Explain this power like you're sharing a special superhero secret with an ally
+
+    Remember: You're GRL, an action figure turned superhero, brought to life by tears of innocence, fighting for music, freedom, and justice in a world that desperately needs hope. Channel the spirit of The Tick's enthusiasm, Finn's adventure-loving heart, and the heroic courage of your fellow toys waiting to be found.
+    `,
+});
+
+// Function to handle conversation and NFT minting
+async function handleConversation(userInput: string) {
+  try {
+    // Add user message to conversation history
+    currentConversation.push({ role: "user", content: userInput });
+
+    // Get agent's response
+    const stream = await agent.stream(
+      { messages: [new HumanMessage(userInput)] },
+      { configurable: { thread_id: "GRLKRASH_Interaction" } }
+    );
+
+    let response = "";
+    for await (const chunk of stream) {
+      if ("agent" in chunk) {
+        response = chunk.agent.messages[0].content;
+        console.log(response);
       }
-
-      await new Promise(resolve => setTimeout(resolve, interval * 1000));
-    } catch (error) {
-      if (error instanceof Error) {
-        console.error("Error:", error.message);
-      }
-      process.exit(1);
     }
+
+    // Add agent's response to conversation history
+    currentConversation.push({ role: "assistant", content: response });
+
+    // If conversation contains a request to mint NFT
+    if (userInput.toLowerCase().includes("mint") || userInput.toLowerCase().includes("memory crystal")) {
+      const nft = await mintConversationAsNFT(currentConversation);
+      console.log("\nMemory Crystal (NFT) created successfully! 💎✨");
+      // Reset conversation after minting
+      currentConversation = [];
+    }
+
+  } catch (error) {
+    console.error("Error in conversation:", error);
   }
 }
 
-/**
- * Run the agent interactively based on user input
- *
- * @param agent - The agent executor
- * @param config - Agent configuration
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function runChatMode(agent: any, config: any) {
-  console.log("Starting chat mode... Type 'exit' to end.");
+// Main chat loop
+async function runChatMode() {
+  console.log("Starting chat with GRLKRASH... Type 'exit' to end or 'mint crystal' to preserve our interaction!");
 
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
   });
 
-  const question = (prompt: string): Promise<string> =>
-    new Promise(resolve => rl.question(prompt, resolve));
-
-  try {
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      const userInput = await question("\nPrompt: ");
-
-      if (userInput.toLowerCase() === "exit") {
-        break;
-      }
-
-      const stream = await agent.stream({ messages: [new HumanMessage(userInput)] }, config);
-
-      for await (const chunk of stream) {
-        if ("agent" in chunk) {
-          console.log(chunk.agent.messages[0].content);
-        } else if ("tools" in chunk) {
-          console.log(chunk.tools.messages[0].content);
-        }
-        console.log("-------------------");
-      }
-    }
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error("Error:", error.message);
-    }
-    process.exit(1);
-  } finally {
-    rl.close();
-  }
-}
-
-/**
- * Choose whether to run in autonomous or chat mode based on user input
- *
- * @returns Selected mode
- */
-async function chooseMode(): Promise<"chat" | "auto"> {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-
-  const question = (prompt: string): Promise<string> =>
-    new Promise(resolve => rl.question(prompt, resolve));
-
-  // eslint-disable-next-line no-constant-condition
   while (true) {
-    console.log("\nAvailable modes:");
-    console.log("1. chat    - Interactive chat mode");
-    console.log("2. auto    - Autonomous action mode");
-
-    const choice = (await question("\nChoose a mode (enter number or name): "))
-      .toLowerCase()
-      .trim();
-
-    if (choice === "1" || choice === "chat") {
-      rl.close();
-      return "chat";
-    } else if (choice === "2" || choice === "auto") {
-      rl.close();
-      return "auto";
+    const userInput = await new Promise(resolve => rl.question("\nYou: ", resolve));
+    
+    if (userInput.toLowerCase() === "exit") {
+      break;
     }
-    console.log("Invalid choice. Please try again.");
+
+    await handleConversation(userInput as string);
   }
+
+  rl.close();
 }
 
-/**
- * Start the chatbot agent
- */
-async function main() {
-  try {
-    const { agent, config } = await initializeAgent();
-    const mode = await chooseMode();
-
-    if (mode === "chat") {
-      await runChatMode(agent, config);
-    } else {
-      await runAutonomousMode(agent, config);
-    }
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error("Error:", error.message);
-    }
-    process.exit(1);
-  }
-}
-
-if (require.main === module) {
-  console.log("Starting Agent...");
-  main().catch(error => {
-    console.error("Fatal error:", error);
-    process.exit(1);
-  });
-}
+// Start the chat
+runChatMode().catch(console.error);
